@@ -1,52 +1,55 @@
-# chronovex
+# Chronovex
 
-Chronovex is a standalone C99 timing library for sequence periods, jitter, deadlines, wrap-safe windows and deterministic scheduling helpers.
+Wrap-safe deadlines, periods, durations, timeouts and schedule calculations.
 
-## Scope
+## Overview
+**Timing and scheduling.** Wrap-safe deadlines, periods, durations, timeouts and schedule calculations.
 
-The package contains 31 public headers and 4 implementation units. It is portable C99, uses no mandatory heap or operating-system service, and keeps caller-owned state explicit where applicable.
+## Engineering problem
+Bare-metal systems need deterministic time arithmetic that remains correct across counter wrap.
 
-## Build and test
+## Features
+- Portable C99-oriented implementation.
+- Deterministic integer or fixed-point behavior documented at function level.
+- No mandatory heap, threads or operating-system services.
+- Separate translation units for selective linking.
 
+## Architecture
+The public surface consists of 4 headers and 4 callable API entries under include/. Implementations are in src/ and tests are in tests/. State, buffers and output ownership are explicit in each header contract.
+
+## Public API
+The complete symbol-by-symbol reference is in docs/API_REFERENCE.md. It lists every public header, callable symbol, include path and available contract comment.
+
+## Integration
 ```sh
 cmake -S . -B build -DCHRONOVEX_BUILD_TESTS=ON
-cmake --build build --config Release
-ctest --test-dir build --output-on-failure -C Release
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
 ```
 
-## Validation status
+For minimal firmware, include only the required header and compile the corresponding source translation unit. No collection-wide dependency is required.
 
-Host validation is run during extraction. ESP32-S3 validation and isolated footprint measurements are pending unless explicitly recorded; no hardware result is claimed.
+## Configuration and dependencies
+The CMake test option is CHRONOVEX_BUILD_TESTS. The library has no mandatory third-party dependency. Platform-specific link requirements are documented in CMake and the affected API header.
 
-## Architecture and integration
+## Numeric and safety contracts
+Read the individual public header before use. It defines widths, representation, valid ranges, rounding, overflow/saturation/wrap behavior, invalid-input handling and whether output is left unchanged on failure. APIs are stateless unless a caller-owned state object is explicitly present.
 
-The library contains independent, deterministic C99 timing operations with
-caller-owned state where state is required. Add `include/` and link `chronovex`,
-or compile selected `src/*.c` files directly.
+## Testing and validation
+2/2 enabled host tests passed.
+See docs/TESTING.md for reproducible commands, coverage boundaries and hardware status.
 
-## API, configuration and dependencies
+## Resource status
+Embedded flash, RAM, stack and cycle measurements are reported only when measured for this product and configuration. Unmeasured values are marked PENDING; host measurements are not MCU measurements.
 
-Public headers are under `include/chronovex/timing`. `CHRONOVEX_BUILD_TESTS`
-controls host tests. There are no mandatory third-party, OS, heap or thread
-dependencies; wrap and deadline contracts are documented per header.
+## Hardware status
+Hardware validation is reported in docs/TESTING.md. HW NOT VERIFIED is used where no reproducible target run is available.
 
-## Resource, performance and limitations
+## Limitations
+Preserved tests outside this product boundary are not silently treated as product coverage. Unsupported ranges and invalid inputs are defined by the public headers.
 
-The enabled host suite passes 2/2 tests. Embedded flash, RAM, stack, cycle and
-worst-case timing measurements are `PENDING`. HW NOT VERIFIED; do not infer MCU
-timing from the host build.
+## Versioning and license
+Version 0.1.0. Public API compatibility is maintained within the 0.x series as documented changes are introduced. Apache License 2.0, copyright Vanderhell; see LICENSE and NOTICE.
 
-## Version, security, license and origin
-
-Versioning is independent with semantic-versioning intent before 1.0. Apache
-License 2.0, copyright Vanderhell. The package is self-contained and does not
-provide security or synchronization by itself.
-
-## Name and origin
-
-Chronovex combines chronos (time) with vector-like execution, reflecting bounded time and schedule calculations.
-Its technical scope is bounded timing and scheduling calculations.
-
-## License
-
-Apache License 2.0, copyright Vanderhell. See LICENSE and NOTICE.
+## Origin
+This repository is a self-contained product library. Historical provenance is maintained in the central catalog, while this repository documents the usable public API and its behavior.
