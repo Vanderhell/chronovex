@@ -1,4 +1,8 @@
 # Chronovex
+![CI](https://github.com/Vanderhell/chronovex/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg) ![Language](https://img.shields.io/badge/language-C99-informational.svg)
+
+![Chronovex banner](docs/banner.svg)
+
 
 Wrap-safe deadlines, periods, durations, timeouts and schedule calculations.
 
@@ -53,3 +57,6 @@ Version 0.1.0. Public API compatibility is maintained within the 0.x series as d
 
 ## Origin
 This repository is a self-contained product library. Historical provenance is maintained in the central catalog, while this repository documents the usable public API and its behavior.
+## Family guide and examples
+
+Read [docs/FAMILY_GUIDE.md](docs/FAMILY_GUIDE.md) for family-level selection guidance, representations, integration checklist and a complete primitive map. Read [docs/API_REFERENCE.md](docs/API_REFERENCE.md) for each header's contract and a test-derived call example. The examples intentionally preserve the validated API units and do not hide failure handling.
