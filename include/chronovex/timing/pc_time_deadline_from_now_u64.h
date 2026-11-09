@@ -1,5 +1,5 @@
-#ifndef PRIMITIVECORE_PC_TIME_DEADLINE_FROM_NOW_U64_H
-#define PRIMITIVECORE_PC_TIME_DEADLINE_FROM_NOW_U64_H
+#ifndef PC_PC_TIME_DEADLINE_FROM_NOW_U64_H
+#define PC_PC_TIME_DEADLINE_FROM_NOW_U64_H
 #include <stdbool.h>
 #include <stdint.h>
 /* Checked non-wrapping deadline = now + delay. False on null output or

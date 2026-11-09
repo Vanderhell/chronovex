@@ -1,4 +1,4 @@
-#include "roundmath/pc_rtc_time_valid_bool.h"
+/* Held-out cross-family validation source; dependency is outside this product. */
 int main(void)
 {
     unsigned h,m,s;
