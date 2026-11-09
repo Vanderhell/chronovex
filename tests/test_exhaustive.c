@@ -1,0 +1,6 @@
+#include "pc_sequence_period_detect_u32.h"
+#include <assert.h>
+typedef struct{uint32_t n;uint32_t map[5];} graph;
+static uint32_t step(uint32_t x,void *p){graph*g=(graph*)p;return g->map[x%g->n];}
+static void check(graph*g,uint32_t x){uint32_t seen[5],s=x;uint32_t mu=0,lam=0,i;pc_sequence_period_u32 got={99u,99u};for(i=0;i<g->n+1u;++i){uint32_t j;for(j=0;j<i;++j)if(seen[j]==s)break;if(j<i){mu=j;lam=i-j;break;}seen[i]=s;s=step(s,g);}assert(lam>0u);assert(pc_sequence_period_detect_u32(x,step,g,100u,&got));assert(got.preperiod==mu&&got.period==lam);}
+int main(void){graph g;uint32_t n,code,x;for(n=1;n<=5u;++n){uint32_t total=1u;for(x=0;x<n;++x)total*=n;g.n=n;for(code=0;code<total;++code){uint32_t v=code;for(x=0;x<n;++x){g.map[x]=v%n;v/=n;}for(x=0;x<n;++x)check(&g,x);}}pc_sequence_period_u32 out={7u,8u};g.n=1;g.map[0]=0;assert(!pc_sequence_period_detect_u32(0,step,&g,1,&out)&&out.preperiod==7u&&out.period==8u);assert(!pc_sequence_period_detect_u32(0,step,&g,0,&out));assert(!pc_sequence_period_detect_u32(0,0,&g,5,&out));assert(!pc_sequence_period_detect_u32(0,step,&g,5,0));return 0;}

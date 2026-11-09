@@ -1,0 +1,26 @@
+cmake_minimum_required(VERSION 3.20)
+project(chronovex VERSION 0.1.0 LANGUAGES C)
+option(CHRONOVEX_BUILD_TESTS 'Build migrated tests' ON)
+file(GLOB CHRONOVEX_SOURCES CONFIGURE_DEPENDS src/*.c)
+add_library(chronovex STATIC ${CHRONOVEX_SOURCES})
+target_include_directories(chronovex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/chronovex/timing)
+target_compile_features(
+chronovex
+ PUBLIC c_std_99)
+if(CHRONOVEX_BUILD_TESTS)
+ enable_testing()
+ file(GLOB CHRONOVEX_TESTS CONFIGURE_DEPENDS tests/*.c)
+ foreach(test_source IN LISTS 
+CHRONOVEX
+_TESTS)
+  get_filename_component(test_name "${test_source}" NAME_WE)
+  add_executable(chronovex_${test_name} ${test_source})
+  target_include_directories(chronovex_${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/chronovex/timing)
+  target_link_libraries(
+chronovex
+_${test_name} PRIVATE 
+chronovex
+)
+  add_test(NAME "${test_name}" COMMAND "chronovex_${test_name}")
+ endforeach()
+endif()
