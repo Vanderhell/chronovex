@@ -1,4 +1,4 @@
-#include "primitivecore/arithmetic/bounded/integer/pc_anim_duration_scale_u32.h"
+#include "pc_anim_duration_scale_u32.h"
 
 #include <stddef.h>
 

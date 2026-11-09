@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <stdint.h>
-#include "../include/pc_time_until_deadline_i64.h"
+#include "pc_time_until_deadline_i64.h"
 int main(void)
 {
     int64_t out=77;
