@@ -42,10 +42,15 @@ Workflow [43005668032](https://github.com/Vanderhell/chronovex/actions/runs/4300
 
 ## ESP32-S3
 
-**HW NOT VERIFIED.** Previously identified COM36 belongs to Estimora, COM19 to Fortavis, and COM37 is reserved. No device is clearly authorized for Chronovex firmware, so no Chronovex image was flashed and no device was reset or modified for this project.
+**PASS: COM37, ESP32-S3.** Following the user's explicit instruction to run this project on COM37, a dedicated ESP-IDF validation image was built using ESP-IDF 5.5.1 and the Espressif GNU 14.2.0 toolchain. The test exercised all four APIs against independent expected boundary values and emitted `CHRONOVEX_ALL4_PASS|passed=4/4|first_failed_api=0`.
+
+Only app0 (`0x10000`, `0x140000` bytes) was temporarily replaced. Before writing, the complete app0 image was backed up (1,310,720 bytes; SHA-256 `553B9D53A6316A3FD7F08AE9F65003E055CD6C6CE94FEF28B862EACF72464D4A`). After the test, the original image was restored and all 20 readback chunks were checked; the restored size and SHA-256 matched exactly. NVS, OTA data, bootloader, partition table and other partitions were not written. The device was reset to run the test and after restoration.
+
+The hardware vectors include nearest-even duration ties and invalid scaling inputs, timer wrap/zero/maximum elapsed values, checked deadline addition at `UINT64_MAX` and overflow, and signed deadline differences at `INT64_MIN`/`INT64_MAX` and unrepresentable boundaries. This is targeted device validation, not exhaustive testing; the host differential suite remains the broad numerical check. Hardware benchmark configuration and results are recorded in [PERFORMANCE.md](PERFORMANCE.md).
 
 ## Remaining limits
 
-- Hardware output, cycles, flash, static RAM, and stack have not been measured for Chronovex.
+- The device test covered targeted vectors rather than the host suite's 100,000 cases per API.
+- The observed stack watermark is for this validation firmware's exercised path; it is not a proof of maximum stack use under all states or future builds.
 - Randomized tests cannot prove all 64-bit input combinations.
 - No confirmed production arithmetic defect was found by the implementation review; this is not a formal proof.

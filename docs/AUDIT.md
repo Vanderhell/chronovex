@@ -32,10 +32,14 @@ Audit date: 2026-11-11. Scope: all four public headers and implementation units,
 
 All four APIs have direct enabled tests. The test suite ran 100,000 fixed-seed differential cases per API and explicit boundary/failure checks. GCC 16.1.0, Visual Studio ClangCL 19.1.5, and MSVC 19.42.34444 passed Debug and Release, 3/3 CTest each. Strict warnings are errors. Remote workflow [43005668032](https://github.com/Vanderhell/chronovex/actions/runs/43005668032) on commit `32b2e30bee2a6267aaa77bdcbae9386a970d4dc2` passed all 8 jobs, including GCC ASan and UBSan; local Windows MinGW lacks `libasan` and `libubsan`.
 
-Hardware is **HW NOT VERIFIED**. COM19 and COM36 belong to unrelated projects; COM37 is reserved. No Chronovex firmware was built or flashed. Cycles, isolated flash/RAM, and stack remain unmeasured.
+## ESP32-S3 validation
+
+At the user's explicit direction, the dedicated test firmware was run on COM37 (ESP32-S3). It reported `CHRONOVEX_ALL4_PASS|passed=4/4|first_failed_api=0`. It checked representative and boundary vectors, not the 100,000-case host differential domain. Toolchain: ESP-IDF 5.5.1 / Espressif GNU 14.2.0, CPU 240 MHz, performance optimization enabled; the library component was compiled as strict C99.
+
+Only app0 was temporarily written. Its original 1,310,720-byte image was backed up, then restored and verified by a full readback SHA-256 match (`553B9D53A6316A3FD7F08AE9F65003E055CD6C6CE94FEF28B862EACF72464D4A`). No NVS, OTA data, bootloader, partition table or other partition was written. See [PERFORMANCE.md](PERFORMANCE.md) for per-API cycle results and component memory accounting. The main-task watermark observed 1,620 bytes used of its 3,584-byte allocation during this run; this is not a universal stack bound.
 
 ## Remaining limitations
 
 - Randomized testing is not exhaustive over the 64-bit domains.
-- No hardware evidence is available for timing or memory usage.
+- Hardware evidence is limited to the recorded board, build settings and representative benchmark/test vectors; it does not prove timing or stack behavior for other inputs, configurations or boards.
 - No confirmed production arithmetic defect was reproduced; tests and review do not constitute a formal proof.

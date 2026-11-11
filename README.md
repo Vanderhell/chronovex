@@ -39,7 +39,7 @@ For direct integration, include the needed header, for example `#include <chrono
 
 There are four public headers and four public callable APIs. Each has a direct enabled test in `tests/test_audit.c`; the CTest suite has three programs. The audit test contains 100,000 fixed-seed differential cases per API plus explicit boundaries, invalid parameters, and output-preservation checks. Checks do not use `assert()` and remain active in Release.
 
-The CMake target `chronovex` is a static C99 library. Testing is optional through `CHRONOVEX_BUILD_TESTS`; strict warnings are enabled by default. See `docs/TESTING.md` for executed toolchains and hardware status.
+The CMake target `chronovex` is a static C99 library. Testing is optional through `CHRONOVEX_BUILD_TESTS`; strict warnings are enabled by default. All four APIs passed targeted expected-value checks on an ESP32-S3 at 240 MHz. See `docs/TESTING.md` and `docs/PERFORMANCE.md` for exact host and device evidence, including limitations.
 
 ## License
 

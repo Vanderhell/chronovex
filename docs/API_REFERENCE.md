@@ -1,6 +1,6 @@
 ﻿# Chronovex API reference
 
-The public API consists of four functions declared in `include/chronovex/timing/`. For every API, `tests/test_audit.c` provides direct enabled boundary and deterministic differential tests. The full test suite is run with checks active in Debug and Release.
+The public API consists of four functions declared in `include/chronovex/timing/`. For every API, `tests/test_audit.c` provides direct enabled boundary and deterministic differential tests. The full test suite is run with checks active in Debug and Release. A targeted ESP32-S3 run also exercised every API and reported `CHRONOVEX_ALL4_PASS`; host and device evidence are distinguished in [TESTING.md](TESTING.md) and [PERFORMANCE.md](PERFORMANCE.md).
 
 ## `pc_anim_duration_scale_u32`
 

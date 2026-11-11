@@ -27,3 +27,5 @@ Only `pc_motion_duration_u32` supports modular wrap arithmetic. Chronovex does n
 5. Run Debug and Release tests; checks are explicit and do not disappear with `NDEBUG`.
 
 All APIs use caller-owned values and pointers. Production implementations do not allocate memory or depend on an operating system.
+
+All four APIs also passed targeted expected-value checks on an ESP32-S3 at 240 MHz. This does not make all timestamp operations wrap-safe and does not replace host differential testing; see [TESTING.md](TESTING.md) and [PERFORMANCE.md](PERFORMANCE.md) for the evidence and limits.
