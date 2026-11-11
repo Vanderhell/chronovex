@@ -1,75 +1,45 @@
 ﻿# Chronovex API reference
 
-This reference explains every public header in the Chronovex product. It is generated from the current headers and test sources; the header remains authoritative when a detail conflicts.
+The public API consists of four functions declared in `include/chronovex/timing/`. For every API, `tests/test_audit.c` provides direct enabled boundary and deterministic differential tests. The full test suite is run with checks active in Debug and Release.
 
-## Reading the entries
-Each entry states the public symbol, implementation unit, contract, edge/failure behavior and a call extracted from the validating test source. The examples are evidence-oriented; adapt buffer ownership and numeric units to the application.
+## `pc_anim_duration_scale_u32`
 
-## include/chronovex/timing/pc_anim_duration_scale_u32.h
+- **Header/source:** `pc_anim_duration_scale_u32.h` / `src/pc_anim_duration_scale_u32.c`
+- **Purpose:** Scale an unsigned duration by `scale_num / scale_den`.
+- **Inputs:** Any `uint32_t duration`, `scale_num`; `scale_den` must be nonzero.
+- **Output:** `round_nearest_even(duration * scale_num / scale_den)` when the rounded result fits `uint32_t`.
+- **Failure:** Returns `false` for a null result pointer, zero denominator, or result above `UINT32_MAX`. The output is unchanged.
+- **Arithmetic:** `duration * scale_num` is exact in `uint64_t`: `(2^32 - 1)^2 < 2^64`. No intermediate multiplication overflow occurs. Half ties round to an even integer, including ties that round down to zero.
+- **Coverage:** Fixed ties, zero inputs/denominator, maximum inputs, result overflow, output preservation, plus 100,000 deterministic exact-reference cases.
 
-**Public symbol:** pc_anim_duration_scale_u32
+## `pc_motion_duration_u32`
 
-**Implementation unit:** src/pc_anim_duration_scale_u32.c
+- **Header/source:** `pc_motion_duration_u32.h` / `src/pc_motion_duration_u32.c`
+- **Purpose:** Return `now - start` modulo `2^32` for a wrapping hardware counter.
+- **Inputs/output:** Any pair of `uint32_t`; always returns a `uint32_t`.
+- **Failure:** None; there are no pointers or invalid bit patterns.
+- **Wrap contract:** Correctly represents elapsed ticks only if the actual interval is in `[0, 2^32 - 1]` ticks. A zero result could mean no elapsed ticks or one/more full counter cycles. The function has no state and cannot recover multiple wraps. Do not use this result as a generic absolute-deadline ordering comparison.
+- **Coverage:** Zero, boundary crossing over `UINT32_MAX`, maximum returned interval, plus 100,000 deterministic cases against an independent modulo reference.
 
-**Purpose and contract:** Return nearest-even(duration * scale_num / scale_den). Failure preserves *result for zero denominator, uint32 result overflow, or null result.
+## `pc_time_deadline_from_now_u64`
 
-**Validation source:** tests/test_implementation.c
+- **Header/source:** `pc_time_deadline_from_now_u64.h` / `src/pc_time_deadline_from_now_u64.c`
+- **Purpose:** Construct an absolute, non-wrapping timestamp `now + delay`.
+- **Inputs:** Any `uint64_t now` and `delay`.
+- **Output:** Exact sum if it is at most `UINT64_MAX`.
+- **Failure:** Returns `false` for a null output pointer or an unrepresentable sum; output is unchanged. Zero delay succeeds even when `now == UINT64_MAX`.
+- **Coverage:** Zero, exact maximum, overflow, null output, output preservation, and 100,000 deterministic cases checked using independent 32-bit-limb addition.
 
-**Test-derived call:**
-```c
-pc_anim_duration_scale_u32(1u,1u,2u,&out)&&out==0u);
-```
+## `pc_time_until_deadline_i64`
 
-**Integration notes:** use the exact fixed-width types and units shown in the declaration; check the boolean/status return before consuming an output pointer; do not assume overlap, rounding or overflow behavior beyond the contract above.
+- **Header/source:** `pc_time_until_deadline_i64.h` / `src/pc_time_until_deadline_i64.c`
+- **Purpose:** Return signed absolute difference `deadline - now` for `uint64_t` timestamps.
+- **Inputs:** Any `uint64_t now` and `deadline`.
+- **Output:** Positive if future, zero if equal, negative if overdue, provided the exact difference lies in `[INT64_MIN, INT64_MAX]`. `INT64_MIN` is representable for overdue magnitude `2^63`.
+- **Failure:** Returns `false` when the signed difference is unrepresentable or output is null. Output is unchanged.
+- **Representation limit:** This signed result cannot describe positive remaining time greater than `INT64_MAX`, or overdue magnitude greater than `2^63`.
+- **Coverage:** Positive/zero/negative cases, both signed result limits, unrepresentable differences, timestamps near `UINT64_MAX`, null/output preservation, and 100,000 deterministic cases against an independent two-limb difference reference.
 
-## include/chronovex/timing/pc_motion_duration_u32.h
+## Integration
 
-**Public symbol:** pc_motion_duration_u32
-
-**Implementation unit:** src/pc_motion_duration_u32.c
-
-**Purpose and contract:** Elapsed modulo-2^32 timer ticks from start to now. The actual interval must be less than one complete timer cycle; multiple wraps are ambiguous.
-
-**Validation source:** tests/driver.c
-
-**Test-derived call:**
-```c
-pc_motion_duration_u32(s,n) != e);
-```
-
-**Integration notes:** use the exact fixed-width types and units shown in the declaration; check the boolean/status return before consuming an output pointer; do not assume overlap, rounding or overflow behavior beyond the contract above.
-
-## include/chronovex/timing/pc_time_deadline_from_now_u64.h
-
-**Public symbol:** pc_time_deadline_from_now_u64
-
-**Implementation unit:** src/pc_time_deadline_from_now_u64.c
-
-**Purpose and contract:** Checked non-wrapping deadline = now + delay. False on null output or uint64 overflow; failure leaves *deadline unchanged.
-
-**Validation source:** No enabled test source was found by symbol search.
-
-**Test-derived call:**
-```c
-No test-derived call was found.;
-```
-
-**Integration notes:** use the exact fixed-width types and units shown in the declaration; check the boolean/status return before consuming an output pointer; do not assume overlap, rounding or overflow behavior beyond the contract above.
-
-## include/chronovex/timing/pc_time_until_deadline_i64.h
-
-**Public symbol:** pc_time_until_deadline_i64
-
-**Implementation unit:** src/pc_time_until_deadline_i64.c
-
-**Purpose and contract:** Store signed deadline-now for uint64 timestamps. Positive means future, negative means overdue. False if result is outside int64 or output is null; failure leaves *remaining unchanged.
-
-**Validation source:** tests/test_basic.c
-
-**Test-derived call:**
-```c
-pc_time_until_deadline_i64(10,15,&out) && out==5);
-```
-
-**Integration notes:** use the exact fixed-width types and units shown in the declaration; check the boolean/status return before consuming an output pointer; do not assume overlap, rounding or overflow behavior beyond the contract above.
-
+Include `<chronovex/timing/<header>.h>` and compile the corresponding source unit, or link the CMake `chronovex` static target. Check boolean results before consuming outputs. No dynamic allocation or external runtime service is required by these functions.

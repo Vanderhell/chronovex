@@ -1,12 +1,46 @@
-name: chronovex-ci
+﻿name: chronovex-ci
 on:
   push:
   pull_request:
 jobs:
-  host:
+  gcc-clang:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
     steps:
       - uses: actions/checkout@v4
-      - run: cmake -S . -B build -DCHRONOVEX_BUILD_TESTS=ON
+      - name: Configure strict C99
+        run: cmake -S . -B build -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCHRONOVEX_BUILD_TESTS=ON -DCHRONOVEX_STRICT_WARNINGS=ON
+      - run: cmake --build build --parallel
+      - run: ctest --test-dir build --output-on-failure
+  msvc:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCHRONOVEX_BUILD_TESTS=ON -DCHRONOVEX_STRICT_WARNINGS=ON
+      - run: cmake --build build --config ${{ matrix.build_type }} --parallel
+      - run: ctest --test-dir build --build-config ${{ matrix.build_type }} --output-on-failure
+  sanitizer:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure sanitizer
+        run: >-
+          cmake -S . -B build -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Debug
+          -DCHRONOVEX_BUILD_TESTS=ON -DCHRONOVEX_STRICT_WARNINGS=ON
+          -DCMAKE_C_FLAGS="-fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer -fno-sanitize-recover=all"
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer -fno-sanitize-recover=all"
       - run: cmake --build build --parallel
       - run: ctest --test-dir build --output-on-failure
