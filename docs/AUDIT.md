@@ -30,7 +30,7 @@ Audit date: 2026-11-11. Scope: all four public headers and implementation units,
 
 ## Validation evidence
 
-All four APIs have direct enabled tests. The test suite ran 100,000 fixed-seed differential cases per API and explicit boundary/failure checks. GCC 16.1.0, Visual Studio ClangCL 19.1.5, and MSVC 19.42.34444 passed Debug and Release, 3/3 CTest each. Strict warnings are errors. Remote workflow [43005668032](https://github.com/Vanderhell/chronovex/actions/runs/43005668032) on commit `32b2e30bee2a6267aaa77bdcbae9386a970d4dc2` passed all 8 jobs, including GCC ASan and UBSan; local Windows MinGW lacks `libasan` and `libubsan`.
+All four APIs have direct enabled tests. The test suite ran 100,000 fixed-seed differential cases per API and explicit boundary/failure checks. GCC 16.1.0, Visual Studio ClangCL 19.1.5, and MSVC 19.42.34444 passed Debug and Release, 3/3 CTest each. Strict warnings are errors. Remote workflow [43012432620](https://github.com/Vanderhell/chronovex/actions/runs/43012432620) on commit `de5a02450cdc06bd7fe3f3abc6bfa112206abc25` passed all 8 jobs, including GCC ASan and UBSan; local Windows MinGW lacks `libasan` and `libubsan`.
 
 ## ESP32-S3 validation
 

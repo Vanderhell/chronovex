@@ -38,7 +38,7 @@ Strict C99/warnings-as-errors passed in the compiler builds above. The direct Cl
 
 ## Remote GitHub Actions
 
-Workflow [43005668032](https://github.com/Vanderhell/chronovex/actions/runs/43005668032) on commit `32b2e30bee2a6267aaa77bdcbae9386a970d4dc2` completed **8/8 PASS**: GCC Debug/Release, Clang Debug/Release, MSVC Debug/Release, GCC ASan, and GCC UBSan. This run supplies the sanitizer validation unavailable in the local Windows MinGW environment.
+Workflow [43012432620](https://github.com/Vanderhell/chronovex/actions/runs/43012432620) on commit `de5a02450cdc06bd7fe3f3abc6bfa112206abc25` completed **8/8 PASS**: GCC Debug/Release, Clang Debug/Release, MSVC Debug/Release, GCC ASan, and GCC UBSan. This run supplies the sanitizer validation unavailable in the local Windows MinGW environment.
 
 ## ESP32-S3
 
