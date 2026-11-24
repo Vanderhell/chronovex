@@ -1,8 +1,8 @@
-#include "pc_anim_duration_scale_u32.h"
+#include <chronovex/timing/anim_duration_scale_u32.h>
 
 #include <stddef.h>
 
-bool pc_anim_duration_scale_u32(uint32_t duration, uint32_t scale_num,
+bool chronovex_anim_duration_scale_u32(uint32_t duration, uint32_t scale_num,
                                 uint32_t scale_den, uint32_t *result)
 {
     uint64_t product, quotient, remainder;

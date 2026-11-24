@@ -7,10 +7,10 @@
 #include "esp_private/esp_clk.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "chronovex/timing/pc_anim_duration_scale_u32.h"
-#include "chronovex/timing/pc_motion_duration_u32.h"
-#include "chronovex/timing/pc_time_deadline_from_now_u64.h"
-#include "chronovex/timing/pc_time_until_deadline_i64.h"
+#include "chronovex/timing/anim_duration_scale_u32.h"
+#include "chronovex/timing/motion_duration_u32.h"
+#include "chronovex/timing/time_deadline_from_now_u64.h"
+#include "chronovex/timing/time_until_deadline_i64.h"
 
 #define API_CHECK(index, condition) do { \
     if (!(condition)) { \
@@ -37,22 +37,22 @@ static uint32_t passed;
 static uint32_t first_failed;
 static bool api_ok[4] = {true, true, true, true};
 
-static bool (* volatile scale_api)(uint32_t, uint32_t, uint32_t, uint32_t *) = pc_anim_duration_scale_u32;
+static bool (* volatile scale_api)(uint32_t, uint32_t, uint32_t, uint32_t *) = chronovex_anim_duration_scale_u32;
 static bool scale_noop(uint32_t duration, uint32_t numerator, uint32_t denominator, uint32_t *result)
 {
     (void)duration; (void)numerator; (void)denominator; *result = 0u; return true;
 }
 static bool (* volatile scale_baseline_api)(uint32_t, uint32_t, uint32_t, uint32_t *) = scale_noop;
 
-static uint32_t (* volatile motion_api)(uint32_t, uint32_t) = pc_motion_duration_u32;
+static uint32_t (* volatile motion_api)(uint32_t, uint32_t) = chronovex_motion_duration_u32;
 static uint32_t motion_noop(uint32_t start, uint32_t now) { (void)start; (void)now; return 0u; }
 static uint32_t (* volatile motion_baseline_api)(uint32_t, uint32_t) = motion_noop;
 
-static bool (* volatile deadline_api)(uint64_t, uint64_t, uint64_t *) = pc_time_deadline_from_now_u64;
+static bool (* volatile deadline_api)(uint64_t, uint64_t, uint64_t *) = chronovex_time_deadline_from_now_u64;
 static bool deadline_noop(uint64_t now, uint64_t delay, uint64_t *out) { (void)now; (void)delay; *out = 0u; return true; }
 static bool (* volatile deadline_baseline_api)(uint64_t, uint64_t, uint64_t *) = deadline_noop;
 
-static bool (* volatile until_api)(uint64_t, uint64_t, int64_t *) = pc_time_until_deadline_i64;
+static bool (* volatile until_api)(uint64_t, uint64_t, int64_t *) = chronovex_time_until_deadline_i64;
 static bool until_noop(uint64_t now, uint64_t deadline, int64_t *out) { (void)now; (void)deadline; *out = 0; return true; }
 static bool (* volatile until_baseline_api)(uint64_t, uint64_t, int64_t *) = until_noop;
 
@@ -159,40 +159,40 @@ void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(3000));
 
-    API_CHECK(1u, pc_anim_duration_scale_u32(1u, 1u, 2u, &u32) && u32 == 0u &&
-                   pc_anim_duration_scale_u32(3u, 1u, 2u, &u32) && u32 == 2u &&
-                   pc_anim_duration_scale_u32(5u, 1u, 2u, &u32) && u32 == 2u &&
-                   pc_anim_duration_scale_u32(7u, 1u, 2u, &u32) && u32 == 4u &&
-                   pc_anim_duration_scale_u32(UINT32_MAX, UINT32_MAX, UINT32_MAX, &u32) && u32 == UINT32_MAX &&
-                   pc_anim_duration_scale_u32(UINT32_MAX, 0u, UINT32_MAX, &u32) && u32 == 0u);
+    API_CHECK(1u, chronovex_anim_duration_scale_u32(1u, 1u, 2u, &u32) && u32 == 0u &&
+                   chronovex_anim_duration_scale_u32(3u, 1u, 2u, &u32) && u32 == 2u &&
+                   chronovex_anim_duration_scale_u32(5u, 1u, 2u, &u32) && u32 == 2u &&
+                   chronovex_anim_duration_scale_u32(7u, 1u, 2u, &u32) && u32 == 4u &&
+                   chronovex_anim_duration_scale_u32(UINT32_MAX, UINT32_MAX, UINT32_MAX, &u32) && u32 == UINT32_MAX &&
+                   chronovex_anim_duration_scale_u32(UINT32_MAX, 0u, UINT32_MAX, &u32) && u32 == 0u);
     u32 = UINT32_C(0x5a5aa5a5);
-    API_CHECK(1u, !pc_anim_duration_scale_u32(1u, 1u, 0u, &u32) && u32 == UINT32_C(0x5a5aa5a5) &&
-                   !pc_anim_duration_scale_u32(UINT32_MAX, UINT32_MAX, 1u, &u32) && u32 == UINT32_C(0x5a5aa5a5) &&
-                   !pc_anim_duration_scale_u32(1u, 1u, 1u, NULL));
+    API_CHECK(1u, !chronovex_anim_duration_scale_u32(1u, 1u, 0u, &u32) && u32 == UINT32_C(0x5a5aa5a5) &&
+                   !chronovex_anim_duration_scale_u32(UINT32_MAX, UINT32_MAX, 1u, &u32) && u32 == UINT32_C(0x5a5aa5a5) &&
+                   !chronovex_anim_duration_scale_u32(1u, 1u, 1u, NULL));
 
-    API_CHECK(2u, pc_motion_duration_u32(UINT32_MAX - 2u, 3u) == 6u &&
-                   pc_motion_duration_u32(17u, 17u) == 0u &&
-                   pc_motion_duration_u32(0u, UINT32_MAX) == UINT32_MAX &&
-                   pc_motion_duration_u32(5u, 4u) == UINT32_MAX);
+    API_CHECK(2u, chronovex_motion_duration_u32(UINT32_MAX - 2u, 3u) == 6u &&
+                   chronovex_motion_duration_u32(17u, 17u) == 0u &&
+                   chronovex_motion_duration_u32(0u, UINT32_MAX) == UINT32_MAX &&
+                   chronovex_motion_duration_u32(5u, 4u) == UINT32_MAX);
 
-    API_CHECK(3u, pc_time_deadline_from_now_u64(0u, 0u, &u64) && u64 == 0u &&
-                   pc_time_deadline_from_now_u64(UINT64_MAX, 0u, &u64) && u64 == UINT64_MAX &&
-                   pc_time_deadline_from_now_u64(UINT64_MAX - 1u, 1u, &u64) && u64 == UINT64_MAX);
+    API_CHECK(3u, chronovex_time_deadline_from_now_u64(0u, 0u, &u64) && u64 == 0u &&
+                   chronovex_time_deadline_from_now_u64(UINT64_MAX, 0u, &u64) && u64 == UINT64_MAX &&
+                   chronovex_time_deadline_from_now_u64(UINT64_MAX - 1u, 1u, &u64) && u64 == UINT64_MAX);
     u64 = UINT64_C(0x123456789abcdef0);
-    API_CHECK(3u, !pc_time_deadline_from_now_u64(UINT64_MAX, 1u, &u64) && u64 == UINT64_C(0x123456789abcdef0) &&
-                   !pc_time_deadline_from_now_u64(0u, 0u, NULL));
+    API_CHECK(3u, !chronovex_time_deadline_from_now_u64(UINT64_MAX, 1u, &u64) && u64 == UINT64_C(0x123456789abcdef0) &&
+                   !chronovex_time_deadline_from_now_u64(0u, 0u, NULL));
 
-    API_CHECK(4u, pc_time_until_deadline_i64(10u, 15u, &i64) && i64 == 5 &&
-                   pc_time_until_deadline_i64(15u, 10u, &i64) && i64 == -5 &&
-                   pc_time_until_deadline_i64(10u, 10u, &i64) && i64 == 0 &&
-                   pc_time_until_deadline_i64(0u, (uint64_t)INT64_MAX, &i64) && i64 == INT64_MAX &&
-                   pc_time_until_deadline_i64((uint64_t)INT64_MAX + 1u, 0u, &i64) && i64 == INT64_MIN &&
-                   pc_time_until_deadline_i64(UINT64_MAX - 2u, UINT64_MAX, &i64) && i64 == 2 &&
-                   pc_time_until_deadline_i64(UINT64_MAX, UINT64_MAX - 2u, &i64) && i64 == -2);
+    API_CHECK(4u, chronovex_time_until_deadline_i64(10u, 15u, &i64) && i64 == 5 &&
+                   chronovex_time_until_deadline_i64(15u, 10u, &i64) && i64 == -5 &&
+                   chronovex_time_until_deadline_i64(10u, 10u, &i64) && i64 == 0 &&
+                   chronovex_time_until_deadline_i64(0u, (uint64_t)INT64_MAX, &i64) && i64 == INT64_MAX &&
+                   chronovex_time_until_deadline_i64((uint64_t)INT64_MAX + 1u, 0u, &i64) && i64 == INT64_MIN &&
+                   chronovex_time_until_deadline_i64(UINT64_MAX - 2u, UINT64_MAX, &i64) && i64 == 2 &&
+                   chronovex_time_until_deadline_i64(UINT64_MAX, UINT64_MAX - 2u, &i64) && i64 == -2);
     i64 = INT64_C(0x123456789);
-    API_CHECK(4u, !pc_time_until_deadline_i64(0u, (uint64_t)INT64_MAX + 1u, &i64) && i64 == INT64_C(0x123456789) &&
-                   !pc_time_until_deadline_i64((uint64_t)INT64_MAX + 2u, 0u, &i64) && i64 == INT64_C(0x123456789) &&
-                   !pc_time_until_deadline_i64(0u, 0u, NULL));
+    API_CHECK(4u, !chronovex_time_until_deadline_i64(0u, (uint64_t)INT64_MAX + 1u, &i64) && i64 == INT64_C(0x123456789) &&
+                   !chronovex_time_until_deadline_i64((uint64_t)INT64_MAX + 2u, 0u, &i64) && i64 == INT64_C(0x123456789) &&
+                   !chronovex_time_until_deadline_i64(0u, 0u, NULL));
 
     {
         uint32_t i;

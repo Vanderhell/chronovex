@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "chronovex/timing/pc_anim_duration_scale_u32.h"
-#include "chronovex/timing/pc_motion_duration_u32.h"
-#include "chronovex/timing/pc_time_deadline_from_now_u64.h"
-#include "chronovex/timing/pc_time_until_deadline_i64.h"
+#include "chronovex/timing/anim_duration_scale_u32.h"
+#include "chronovex/timing/motion_duration_u32.h"
+#include "chronovex/timing/time_deadline_from_now_u64.h"
+#include "chronovex/timing/time_until_deadline_i64.h"
 
 #define CHECK(condition) do { \
     if (!(condition)) { \
@@ -117,45 +117,45 @@ int main(void)
     unsigned i;
 
     /* Animation scaling boundaries, rounding ties, invalid inputs, preservation. */
-    CHECK(pc_anim_duration_scale_u32(1u, 1u, 2u, &u32) && u32 == 0u);
-    CHECK(pc_anim_duration_scale_u32(3u, 1u, 2u, &u32) && u32 == 2u);
-    CHECK(pc_anim_duration_scale_u32(5u, 1u, 2u, &u32) && u32 == 2u);
-    CHECK(pc_anim_duration_scale_u32(7u, 1u, 2u, &u32) && u32 == 4u);
-    CHECK(pc_anim_duration_scale_u32(UINT32_MAX, UINT32_MAX, UINT32_MAX, &u32) && u32 == UINT32_MAX);
-    CHECK(pc_anim_duration_scale_u32(UINT32_MAX, 0u, UINT32_MAX, &u32) && u32 == 0u);
+    CHECK(chronovex_anim_duration_scale_u32(1u, 1u, 2u, &u32) && u32 == 0u);
+    CHECK(chronovex_anim_duration_scale_u32(3u, 1u, 2u, &u32) && u32 == 2u);
+    CHECK(chronovex_anim_duration_scale_u32(5u, 1u, 2u, &u32) && u32 == 2u);
+    CHECK(chronovex_anim_duration_scale_u32(7u, 1u, 2u, &u32) && u32 == 4u);
+    CHECK(chronovex_anim_duration_scale_u32(UINT32_MAX, UINT32_MAX, UINT32_MAX, &u32) && u32 == UINT32_MAX);
+    CHECK(chronovex_anim_duration_scale_u32(UINT32_MAX, 0u, UINT32_MAX, &u32) && u32 == 0u);
     u32 = 0x12345678u;
-    CHECK(!pc_anim_duration_scale_u32(1u, 1u, 0u, &u32) && u32 == 0x12345678u);
-    CHECK(!pc_anim_duration_scale_u32(UINT32_MAX, UINT32_MAX, 1u, &u32) && u32 == 0x12345678u);
-    CHECK(!pc_anim_duration_scale_u32(1u, 1u, 1u, NULL));
+    CHECK(!chronovex_anim_duration_scale_u32(1u, 1u, 0u, &u32) && u32 == 0x12345678u);
+    CHECK(!chronovex_anim_duration_scale_u32(UINT32_MAX, UINT32_MAX, 1u, &u32) && u32 == 0x12345678u);
+    CHECK(!chronovex_anim_duration_scale_u32(1u, 1u, 1u, NULL));
 
     /* Modular elapsed-time boundary vectors. */
-    CHECK(pc_motion_duration_u32(UINT32_MAX - 2u, 3u) == 6u);
-    CHECK(pc_motion_duration_u32(17u, 17u) == 0u);
-    CHECK(pc_motion_duration_u32(0u, UINT32_MAX) == UINT32_MAX);
-    CHECK(pc_motion_duration_u32(5u, 4u) == UINT32_MAX);
-    CHECK(pc_motion_duration_u32(0u, 0u) == 0u); /* also what one full wrap aliases to */
+    CHECK(chronovex_motion_duration_u32(UINT32_MAX - 2u, 3u) == 6u);
+    CHECK(chronovex_motion_duration_u32(17u, 17u) == 0u);
+    CHECK(chronovex_motion_duration_u32(0u, UINT32_MAX) == UINT32_MAX);
+    CHECK(chronovex_motion_duration_u32(5u, 4u) == UINT32_MAX);
+    CHECK(chronovex_motion_duration_u32(0u, 0u) == 0u); /* also what one full wrap aliases to */
 
     /* Checked absolute timestamp addition. */
-    CHECK(pc_time_deadline_from_now_u64(0u, 0u, &u64) && u64 == 0u);
-    CHECK(pc_time_deadline_from_now_u64(UINT64_MAX, 0u, &u64) && u64 == UINT64_MAX);
-    CHECK(pc_time_deadline_from_now_u64(UINT64_MAX - 1u, 1u, &u64) && u64 == UINT64_MAX);
+    CHECK(chronovex_time_deadline_from_now_u64(0u, 0u, &u64) && u64 == 0u);
+    CHECK(chronovex_time_deadline_from_now_u64(UINT64_MAX, 0u, &u64) && u64 == UINT64_MAX);
+    CHECK(chronovex_time_deadline_from_now_u64(UINT64_MAX - 1u, 1u, &u64) && u64 == UINT64_MAX);
     u64 = UINT64_C(0x123456789abcdef0);
-    CHECK(!pc_time_deadline_from_now_u64(UINT64_MAX, 1u, &u64) && u64 == UINT64_C(0x123456789abcdef0));
-    CHECK(!pc_time_deadline_from_now_u64(1u, UINT64_MAX, &u64) && u64 == UINT64_C(0x123456789abcdef0));
-    CHECK(!pc_time_deadline_from_now_u64(0u, 0u, NULL));
+    CHECK(!chronovex_time_deadline_from_now_u64(UINT64_MAX, 1u, &u64) && u64 == UINT64_C(0x123456789abcdef0));
+    CHECK(!chronovex_time_deadline_from_now_u64(1u, UINT64_MAX, &u64) && u64 == UINT64_C(0x123456789abcdef0));
+    CHECK(!chronovex_time_deadline_from_now_u64(0u, 0u, NULL));
 
     /* Signed deadline difference representability boundaries. */
-    CHECK(pc_time_until_deadline_i64(10u, 15u, &i64) && i64 == 5);
-    CHECK(pc_time_until_deadline_i64(15u, 10u, &i64) && i64 == -5);
-    CHECK(pc_time_until_deadline_i64(10u, 10u, &i64) && i64 == 0);
-    CHECK(pc_time_until_deadline_i64(0u, (uint64_t)INT64_MAX, &i64) && i64 == INT64_MAX);
-    CHECK(pc_time_until_deadline_i64((uint64_t)INT64_MAX + 1u, 0u, &i64) && i64 == INT64_MIN);
-    CHECK(pc_time_until_deadline_i64(UINT64_MAX - 2u, UINT64_MAX, &i64) && i64 == 2);
-    CHECK(pc_time_until_deadline_i64(UINT64_MAX, UINT64_MAX - 2u, &i64) && i64 == -2);
+    CHECK(chronovex_time_until_deadline_i64(10u, 15u, &i64) && i64 == 5);
+    CHECK(chronovex_time_until_deadline_i64(15u, 10u, &i64) && i64 == -5);
+    CHECK(chronovex_time_until_deadline_i64(10u, 10u, &i64) && i64 == 0);
+    CHECK(chronovex_time_until_deadline_i64(0u, (uint64_t)INT64_MAX, &i64) && i64 == INT64_MAX);
+    CHECK(chronovex_time_until_deadline_i64((uint64_t)INT64_MAX + 1u, 0u, &i64) && i64 == INT64_MIN);
+    CHECK(chronovex_time_until_deadline_i64(UINT64_MAX - 2u, UINT64_MAX, &i64) && i64 == 2);
+    CHECK(chronovex_time_until_deadline_i64(UINT64_MAX, UINT64_MAX - 2u, &i64) && i64 == -2);
     i64 = INT64_C(0x123456789);
-    CHECK(!pc_time_until_deadline_i64(0u, (uint64_t)INT64_MAX + 1u, &i64) && i64 == INT64_C(0x123456789));
-    CHECK(!pc_time_until_deadline_i64((uint64_t)INT64_MAX + 2u, 0u, &i64) && i64 == INT64_C(0x123456789));
-    CHECK(!pc_time_until_deadline_i64(0u, 0u, NULL));
+    CHECK(!chronovex_time_until_deadline_i64(0u, (uint64_t)INT64_MAX + 1u, &i64) && i64 == INT64_C(0x123456789));
+    CHECK(!chronovex_time_until_deadline_i64((uint64_t)INT64_MAX + 2u, 0u, &i64) && i64 == INT64_C(0x123456789));
+    CHECK(!chronovex_time_until_deadline_i64(0u, 0u, NULL));
 
     /* 100,000 deterministic differential cases for every applicable API. */
     for (i = 0u; i < 100000u; ++i) {
@@ -166,14 +166,14 @@ int main(void)
         u32 = UINT32_C(0xa5a55a5a);
         expected_u32 = UINT32_C(0x5a5aa5a5);
         expected_ok = reference_scale(duration, numerator, denominator, &expected_u32);
-        actual_ok = pc_anim_duration_scale_u32(duration, numerator, denominator, &u32);
+        actual_ok = chronovex_anim_duration_scale_u32(duration, numerator, denominator, &u32);
         CHECK(actual_ok == expected_ok);
         CHECK(actual_ok ? u32 == expected_u32 : u32 == UINT32_C(0xa5a55a5a));
 
         {
             uint32_t start = (uint32_t)next_random();
             uint32_t now = (uint32_t)next_random();
-            CHECK(pc_motion_duration_u32(start, now) == reference_elapsed(start, now));
+            CHECK(chronovex_motion_duration_u32(start, now) == reference_elapsed(start, now));
         }
         {
             uint64_t now = next_random();
@@ -181,7 +181,7 @@ int main(void)
             u64 = UINT64_C(0x1122334455667788);
             expected_u64 = UINT64_C(0x8877665544332211);
             expected_ok = reference_deadline(now, delay, &expected_u64);
-            actual_ok = pc_time_deadline_from_now_u64(now, delay, &u64);
+            actual_ok = chronovex_time_deadline_from_now_u64(now, delay, &u64);
             CHECK(actual_ok == expected_ok);
             CHECK(actual_ok ? u64 == expected_u64 : u64 == UINT64_C(0x1122334455667788));
         }
@@ -191,7 +191,7 @@ int main(void)
             i64 = INT64_C(0x13579bdf);
             expected_i64 = INT64_C(0x2468ace0);
             expected_ok = reference_until(now, deadline, &expected_i64);
-            actual_ok = pc_time_until_deadline_i64(now, deadline, &i64);
+            actual_ok = chronovex_time_until_deadline_i64(now, deadline, &i64);
             CHECK(actual_ok == expected_ok);
             CHECK(actual_ok ? i64 == expected_i64 : i64 == INT64_C(0x13579bdf));
         }

@@ -1,6 +1,6 @@
-#include "pc_time_until_deadline_i64.h"
+#include <chronovex/timing/time_until_deadline_i64.h>
 
-bool pc_time_until_deadline_i64(uint64_t now, uint64_t deadline,
+bool chronovex_time_until_deadline_i64(uint64_t now, uint64_t deadline,
                                 int64_t *remaining)
 {
     uint64_t magnitude;

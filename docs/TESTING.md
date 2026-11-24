@@ -1,56 +1,54 @@
-﻿# Testing and validation
+# Testing and validation
 
-## Inventory and coverage
+## Direct API coverage
 
-- Four public callable APIs are declared by four headers under `include/chronovex/timing/`.
-- `tests/test_audit.c` directly calls all 4/4 APIs. Each receives 100,000 deterministic fixed-seed differential cases, alongside targeted boundary and invalid-input checks.
-- Scaling uses a base-2^16 limb multiplication plus binary division oracle, independent of the production uint64 product/division sequence.
-- Deadline construction uses a two-limb addition oracle. Signed deadline difference uses two-limb subtraction and a distinct negative conversion. Modular elapsed time uses an explicit modulo reference.
-- Tests use explicit checks, not `assert()`, so Debug and Release both execute every condition.
-- Boundary checks include nearest-even ties, zero denominator, maximum uint32 factors, product/result limits, counter wrap and zero elapsed, full-width absolute timestamp addition, `INT64_MIN`/`INT64_MAX` differences, null pointers, and output preservation.
+The enabled host suite calls all four public `chronovex_` APIs directly. `tests/test_audit.c` runs 100,000 deterministic differential cases per API and targeted limits, invalid inputs, wrap behavior, rounding boundaries, and output-preservation checks. The independent references use limb arithmetic for multiplication, addition and subtraction; modular elapsed time uses a separate modulo reference. Checks are explicit and remain active in Release.
 
-The 64-bit random domains are not exhaustively enumerated; deterministic differential testing is evidence, not a proof for all possible values.
+The strict CTest configuration includes ten entries when tests, examples and the optional C++ smoke test are enabled: four C API programs, four separately compiled public-header smoke tests, the C++98 header/link check (when a C++ compiler is available), and the quick-start example. The installed-package consumer is also built and run separately by CI.
 
 ## Reproduce
 
 ```sh
-cmake -S . -B build -DCHRONOVEX_BUILD_TESTS=ON -DCHRONOVEX_STRICT_WARNINGS=ON
-cmake --build build --config Release --parallel
-ctest --test-dir build -C Release --output-on-failure
+cmake -S . -B build -DCHRONOVEX_BUILD_TESTS=ON -DCHRONOVEX_BUILD_EXAMPLES=ON -DCHRONOVEX_BUILD_CXX_HEADER_TEST=ON -DCHRONOVEX_STRICT_WARNINGS=ON -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
 ```
 
-CMake selects C99 with extensions disabled. GCC and Clang use `-Wall -Wextra -Wpedantic -Werror`; MSVC uses `/W4 /WX`. Tests remain enabled only when `CHRONOVEX_BUILD_TESTS=ON`.
+Repeat with `-DCMAKE_BUILD_TYPE=Release` in a separate build directory. GCC and Clang use `-Wall -Wextra -Wpedantic -Werror`; MSVC-compatible builds use `/W4 /WX`. CTest checks are not based on `assert()`.
 
-## Local host results (2026-11-11)
+## Local validation of the namespaced API migration
 
-| Compiler | Configuration | Result |
-|---|---|---|
-| GCC 16.1.0 (MinGW UCRT) | Debug | PASS, 3/3 CTest |
-| GCC 16.1.0 (MinGW UCRT) | Release | PASS, 3/3 CTest |
-| Clang 19.1.5 (Visual Studio ClangCL toolset) | Debug | PASS, 3/3 CTest |
-| Clang 19.1.5 (Visual Studio ClangCL toolset) | Release | PASS, 3/3 CTest |
-| MSVC 19.42.34444 | Debug | PASS, 3/3 CTest |
-| MSVC 19.42.34444 | Release | PASS, 3/3 CTest |
-| GCC ASan (local Windows/MinGW) | Debug | NOT RUN: `libasan` runtime is not installed in this toolchain |
-| GCC UBSan (local Windows/MinGW) | Debug | NOT RUN: `libubsan` runtime is not installed in this toolchain |
+Executed 2026-11-24 against the current working tree:
 
-Strict C99/warnings-as-errors passed in the compiler builds above. The direct Clang Windows GNU link attempt was unavailable because matching Windows GNU runtime libraries are not installed; the Visual Studio ClangCL toolset was used and passed both configurations.
+| Toolchain / configuration | Result |
+|---|---|
+| GCC 16.1.0 / Debug | PASS, 10/10 CTest |
+| GCC 16.1.0 / Release | PASS, 10/10 CTest |
+| MSVC 19.42.34444 / Debug | PASS, 10/10 CTest |
+| MSVC 19.42.34444 / Release | PASS, 10/10 CTest |
+| Visual Studio ClangCL 19.1.5 / Debug | PASS, 10/10 CTest |
+| Visual Studio ClangCL 19.1.5 / Release | PASS, 10/10 CTest |
+| Windows GNU-mode Clang 22.1.8 | NOT RUN: the installed linker environment lacks `oldnames.lib` and `msvcrtd.lib`; ClangCL was used and passed. |
+| GCC AddressSanitizer | NOT RUN locally: MinGW linker cannot find `-lasan`; the WSL environment was inaccessible. |
+| GCC UndefinedBehaviorSanitizer | NOT RUN locally: MinGW linker cannot find `-lubsan`; the WSL environment was inaccessible. |
 
-## Remote GitHub Actions
+Additional executed checks:
 
-Workflow [43012432620](https://github.com/Vanderhell/chronovex/actions/runs/43012432620) on commit `de5a02450cdc06bd7fe3f3abc6bfa112206abc25` completed **8/8 PASS**: GCC Debug/Release, Clang Debug/Release, MSVC Debug/Release, GCC ASan, and GCC UBSan. This run supplies the sanitizer validation unavailable in the local Windows MinGW environment.
+- Fresh Release install to a local prefix and external `find_package(Chronovex 0.2 CONFIG REQUIRED)` consumer using GCC 16.1.0: PASS (1/1 CTest).
+
+- Installed Release package consumed through external `find_package(Chronovex CONFIG REQUIRED)`: PASS.
+- External `add_subdirectory()` C consumer linked `Chronovex::Chronovex`: PASS.
+- The previous v0.1 include paths and function spellings compile and run through compatibility headers: PASS.
+- Public headers compile and link from C++98 using ClangCL and MSVC, and from GNU C++98: PASS.
+
+The namespaced changes have passed the six local host configurations above. The current working tree has not yet been checked by a remote workflow. The existing remote run applies to the earlier v0.1 source revision and is not evidence for this working tree. The updated workflow adds an installed-consumer job; run and verify it after the changes reach the remote repository.
 
 ## ESP32-S3
 
-**PASS: COM37, ESP32-S3.** Following the user's explicit instruction to run this project on COM37, a dedicated ESP-IDF validation image was built using ESP-IDF 5.5.1 and the Espressif GNU 14.2.0 toolchain. The test exercised all four APIs against independent expected boundary values and emitted `CHRONOVEX_ALL4_PASS|passed=4/4|first_failed_api=0`.
+A historical targeted device run exercised all four APIs and reported `CHRONOVEX_ALL4_PASS|passed=4/4|first_failed_api=0` at 240 MHz using ESP-IDF 5.5.1 and Espressif GNU 14.2.0. It used representative and boundary vectors, not the 100,000-case host differential suite. The current namespaced source revision has not been flashed or rerun on hardware; treat the result as historical evidence only.
 
-Only app0 (`0x10000`, `0x140000` bytes) was temporarily replaced. Before writing, the complete app0 image was backed up (1,310,720 bytes; SHA-256 `553B9D53A6316A3FD7F08AE9F65003E055CD6C6CE94FEF28B862EACF72464D4A`). After the test, the original image was restored and all 20 readback chunks were checked; the restored size and SHA-256 matched exactly. NVS, OTA data, bootloader, partition table and other partitions were not written. The device was reset to run the test and after restoration.
+## Limits
 
-The hardware vectors include nearest-even duration ties and invalid scaling inputs, timer wrap/zero/maximum elapsed values, checked deadline addition at `UINT64_MAX` and overflow, and signed deadline differences at `INT64_MIN`/`INT64_MAX` and unrepresentable boundaries. This is targeted device validation, not exhaustive testing; the host differential suite remains the broad numerical check. Hardware benchmark configuration and results are recorded in [PERFORMANCE.md](PERFORMANCE.md).
-
-## Remaining limits
-
-- The device test covered targeted vectors rather than the host suite's 100,000 cases per API.
-- The observed stack watermark is for this validation firmware's exercised path; it is not a proof of maximum stack use under all states or future builds.
-- Randomized tests cannot prove all 64-bit input combinations.
-- No confirmed production arithmetic defect was found by the implementation review; this is not a formal proof.
+- The 64-bit input domains are not exhaustively enumerated; seeded differential tests do not prove all possible values.
+- The targeted historical device test does not establish full-domain behavior, a universal stack bound, or performance for other toolchains/configurations.
+- Historical package/module tests that are not in the enabled target list remain preserved in the repository and are not counted as current passing CTest tests.

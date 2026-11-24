@@ -1,45 +1,46 @@
-﻿# Chronovex technical audit register
+# Chronovex audit register
 
-Audit date: 2026-11-11. Scope: all four public headers and implementation units, enabled and preserved test sources, CMake, CI, and product documentation. No production algorithm or public signature was changed.
+Audit update: 2026-11-24. Scope: four public timing APIs, namespace migration, public headers, CMake install/export configuration, compatibility headers, enabled tests, examples, and existing hardware/performance evidence.
 
-## Public API inventory
+## API and migration inventory
 
-| API | Implementation | Direct enabled test |
-|---|---|---|
-| `pc_anim_duration_scale_u32` | `src/pc_anim_duration_scale_u32.c` | `tests/test_audit.c` |
-| `pc_motion_duration_u32` | `src/pc_motion_duration_u32.c` | `tests/test_audit.c` |
-| `pc_time_deadline_from_now_u64` | `src/pc_time_deadline_from_now_u64.c` | `tests/test_audit.c` |
-| `pc_time_until_deadline_i64` | `src/pc_time_until_deadline_i64.c` | `tests/test_audit.c` |
-
-## Findings
-
-| ID | Classification | Finding | Disposition/evidence |
+| Primary API | Public header | Implementation | Direct enabled test |
 |---|---|---|---|
-| C-01 | BUG (test coverage) | `pc_time_deadline_from_now_u64` was not directly covered by an enabled test; the test CMake list enabled only two programs. | Added `test_audit.c`; direct checks and 100,000 deterministic differential cases for deadline addition. |
-| C-02 | BUG (Release validation) | Existing enabled tests used `assert()`, which disappears under `NDEBUG`. | Replaced assertions with explicit failure checks; Release GCC/Clang/MSVC runs execute all checks. |
-| C-03 | BUG (documentation accuracy) | README described the family broadly as wrap-safe deadlines; API docs had a missing test placeholder. | Rewrote timing-contract summaries and API evidence. Only 32-bit elapsed subtraction is modular; deadline construction is checked absolute addition. |
-| C-04 | OK (production arithmetic) | Duration scaling product, rounding, checked deadline addition, signed difference, and modulo elapsed subtraction reviewed. | No reproducible production defect found. See details below and direct differential test evidence. |
+| `chronovex_anim_duration_scale_u32` | `include/chronovex/timing/anim_duration_scale_u32.h` | `src/anim_duration_scale_u32.c` | `tests/test_audit.c` |
+| `chronovex_motion_duration_u32` | `include/chronovex/timing/motion_duration_u32.h` | `src/motion_duration_u32.c` | `tests/test_audit.c` |
+| `chronovex_time_deadline_from_now_u64` | `include/chronovex/timing/time_deadline_from_now_u64.h` | `src/time_deadline_from_now_u64.c` | `tests/test_audit.c` |
+| `chronovex_time_until_deadline_i64` | `include/chronovex/timing/time_until_deadline_i64.h` | `src/time_until_deadline_i64.c` | `tests/test_audit.c` |
 
-## Algorithm review
+The old v0.1 header paths remain forwarding compatibility headers and map their former function spellings to the namespaced API. No duplicate old linker symbols are emitted; consumers must rebuild. The mapping is recorded in the internal migration register.
 
-- **Scaling:** all `uint32_t × uint32_t` products fit in `uint64_t`; nearest-even compares remainder with denominator minus remainder, avoiding doubled-remainder overflow. A rounded quotient above `UINT32_MAX` fails without writing output.
-- **Modular elapsed:** unsigned subtraction is defined modulo `2^32`. Actual elapsed is unambiguous only in `[0, 2^32-1]` ticks; full-cycle/multiple-cycle history is not recoverable. It is not an absolute deadline comparison.
-- **Deadline construction:** checks representability of exact `now + delay` before addition; overflow and null output fail without modifying the output.
-- **Signed remaining time:** ordered unsigned subtraction avoids underflow; representable interval is `[-2^63, 2^63-1]`. The `-2^63` boundary is handled without negating `INT64_MIN`.
-- All operations are deterministic and use fixed-width integer arithmetic. No mandatory heap/OS dependency or file-scope state is present in the production C units.
+## Correctness findings
 
-## Validation evidence
+No production arithmetic was changed in this update. The algorithms retain their previously audited semantics:
 
-All four APIs have direct enabled tests. The test suite ran 100,000 fixed-seed differential cases per API and explicit boundary/failure checks. GCC 16.1.0, Visual Studio ClangCL 19.1.5, and MSVC 19.42.34444 passed Debug and Release, 3/3 CTest each. Strict warnings are errors. Remote workflow [43012432620](https://github.com/Vanderhell/chronovex/actions/runs/43012432620) on commit `de5a02450cdc06bd7fe3f3abc6bfa112206abc25` passed all 8 jobs, including GCC ASan and UBSan; local Windows MinGW lacks `libasan` and `libubsan`.
+- Duration scaling multiplies two `uint32_t` values exactly in `uint64_t`, rounds ties to even, rejects zero denominator and out-of-range results, and preserves output on failure.
+- Wrapping elapsed time uses defined unsigned subtraction modulo `2^32`; a single returned value cannot disambiguate one or more full counter cycles.
+- Absolute deadline construction rejects `now + delay` overflow and preserves the output on failure.
+- Signed remaining time accepts only exact differences in `[-2^63, 2^63-1]`, including `INT64_MIN` without negating it, and preserves output on failure.
 
-## ESP32-S3 validation
+The new C++ smoke test exposed a test-only assumption: `UINT32_MAX` is not guaranteed by the selected C++98 headers. The vector now uses `~uint32_t(0)`. Initial compatibility/quick-start tests also had the `start, now` arguments reversed; those test vectors were corrected to the header contract. These test defects did not identify a production algorithm defect.
 
-At the user's explicit direction, the dedicated test firmware was run on COM37 (ESP32-S3). It reported `CHRONOVEX_ALL4_PASS|passed=4/4|first_failed_api=0`. It checked representative and boundary vectors, not the 100,000-case host differential domain. Toolchain: ESP-IDF 5.5.1 / Espressif GNU 14.2.0, CPU 240 MHz, performance optimization enabled; the library component was compiled as strict C99.
+## Build and integration findings
 
-Only app0 was temporarily written. Its original 1,310,720-byte image was backed up, then restored and verified by a full readback SHA-256 match (`553B9D53A6316A3FD7F08AE9F65003E055CD6C6CE94FEF28B862EACF72464D4A`). No NVS, OTA data, bootloader, partition table or other partition was written. See [PERFORMANCE.md](PERFORMANCE.md) for per-API cycle results and component memory accounting. The main-task watermark observed 1,620 bytes used of its 3,584-byte allocation during this run; this is not a universal stack bound.
+- Replaced CMake source globbing with an explicit four-file list.
+- Added the `Chronovex::Chronovex` alias/export, install rules, package config and version files.
+- Tests and examples are opt-in and disabled by default for consumers.
+- CTest names are library-prefixed; test checks stay enabled in Release.
+- Added C++ linkage guards to the four primary headers and kept a source-compatibility path.
+- GCC Debug/Release, MSVC Debug/Release and Visual Studio ClangCL Debug/Release each passed 6/6 CTest locally.
+- External installed `find_package()` and `add_subdirectory()` C consumers passed locally.
 
-## Remaining limitations
+## Remaining validation limits
 
-- Randomized testing is not exhaustive over the 64-bit domains.
-- Hardware evidence is limited to the recorded board, build settings and representative benchmark/test vectors; it does not prove timing or stack behavior for other inputs, configurations or boards.
-- No confirmed production arithmetic defect was reproduced; tests and review do not constitute a formal proof.
+- Local ASan and UBSan could not be linked: the available MinGW installation lacks `libasan` and `libubsan`, and WSL access was denied. The updated remote sanitizer jobs have not yet run on this source revision.
+- Windows GNU-mode Clang could not link the Windows runtime libraries; Visual Studio ClangCL passed Debug and Release.
+- Historical ESP32-S3 evidence is 4/4 representative checks. The namespaced source revision has not been rerun on hardware.
+- Preserved non-enabled package/module tests are not counted as current passing tests. Their ownership and migration remain part of the portfolio-wide reconciliation.
+
+## 2026-11-24 working-tree validation
+
+After adding separate C compilation tests for each public header, GCC 16.1.0, MSVC 19.42.34444 and Visual Studio ClangCL 19.1.5 each passed Debug and Release with 10/10 CTest tests. Sanitizers and the new remote workflow remain pending; this does not supersede the historical hardware evidence described above.
