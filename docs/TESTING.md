@@ -41,7 +41,7 @@ Additional executed checks:
 - The previous v0.1 include paths and function spellings compile and run through compatibility headers: PASS.
 - Public headers compile and link from C++98 using ClangCL and MSVC, and from GNU C++98: PASS.
 
-The namespaced changes have passed the six local host configurations above. The current working tree has not yet been checked by a remote workflow. The existing remote run applies to the earlier v0.1 source revision and is not evidence for this working tree. The updated workflow adds an installed-consumer job; run and verify it after the changes reach the remote repository.
+The namespaced changes have passed the six local host configurations above. Remote validation of commit `d7fe9a80a0b5f1847cb56053509ad7dc67da0647` completed successfully: all 9 GitHub Actions jobs passed, including GCC/Clang Debug and Release, MSVC Debug and Release, ASan, UBSan, and installed-package consumption. Workflow: https://github.com/Vanderhell/chronovex/actions/runs/45462832030.
 
 ## ESP32-S3
 
