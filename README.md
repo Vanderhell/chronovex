@@ -46,7 +46,7 @@ cmake --install build --prefix install
 
 Installed CMake consumers can use `find_package(Chronovex CONFIG REQUIRED)` and link `Chronovex::Chronovex`. Source consumers can use `add_subdirectory()` and link the same target. For selective source integration, include only the required header and compile its matching file under `src/`; the library uses explicit source lists.
 
-The v0.1 header paths and `pc_` function spellings remain source-compatible through forwarding headers and macros. New integrations should use the `chronovex_` API and headers without the historical prefix. The compatibility headers do not export duplicate legacy linker symbols; applications should rebuild from source when migrating.
+The v0.1 header paths and earlier function spellings remain source-compatible through forwarding headers and macros. New integrations should use the `chronovex_` API and headers without the historical prefix. The compatibility headers do not export duplicate legacy linker symbols; applications should rebuild from source when migrating.
 
 ## Validation and documentation
 
